@@ -11,14 +11,14 @@ value = 100
 time_stamp = Time.now.to_s
 
 digest = OpenSSL::Digest.new("sha256")
-trabsaction_hash = digest.update(from + to + value.to_s + time_stamp).to_s.slice(1..10)
+transaction_hash = digest.update(from + to + value.to_s + time_stamp).to_s.slice(1..10)
 
 query = {
     "from": from, 
     "to": to,
     "value": value,
     "time_stamp": time_stamp,
-    "transaction_hash": trabsaction_hash
+    "transaction_hash": transaction_hash
 }.to_json
 
 node_urls.each do |url|
