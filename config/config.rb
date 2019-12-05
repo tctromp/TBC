@@ -78,28 +78,6 @@ def send_transaction(transaction)
   end
 end
 
-# def create_block()
-#   sum = 0
-#   transactions =[]
-#   CSV.read("./transactions.csv").each do |transaction|
-#     sum += transaction[3].hex
-#     transactions.push(transaction)
-#   end
-
-#  nonce = 0
-#  hash = ""
-
-#  while true do
-#   hash = OpenSSL::Digest.new("sha256").update(sum + nonce).to_s
-#   if hash.start_with("000")
-#     #　トランザクションを消す処理
-#     break
-#   end
-#   nonce ++
-#  end
-#  return hash, nonce, transactions
-# end
-
 bind 'tcp://127.0.0.1:4000'
 
 
