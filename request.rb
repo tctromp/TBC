@@ -29,6 +29,7 @@ transactions = [{from: "0xa3e639fd35", to: "b", value: 1000000, hash: "abc", tim
 query = {
     "hash": "0000cdf",
     "nonce": 100,
+    "parent_hash": "00000",
     "transactions": transactions
 }.to_json
 
