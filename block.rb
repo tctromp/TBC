@@ -4,9 +4,9 @@ def recieve_block(env)
   puts "Recieve Block"
 
   response = false
-  message = "Block's format is not valid"
-
-  block = JSON.parse(env['rack.input'].read) rescue nil
+	message = "Block's format is not valid"
+	
+	block = JSON.parse(env['rack.input'].read) rescue nil
 
 if block.kind_of?(Hash)
 	if block_is_valid?(block)
@@ -26,11 +26,14 @@ if block.kind_of?(Hash)
 end
 
 def block_is_valid?(block)
+	# p hash_is_enough_small?(block)
+	# p included_transactions_are_valid?(block)
+	# p block_is_duplicated?(block)
 	return hash_is_enough_small?(block) && included_transactions_are_valid?(block) && !block_is_duplicated?(block)
 end
 
 def block_is_duplicated?(block)
-duplicated_flag = false
+	duplicated_flag = false
 	File.open("./block.txt").each do |post_block|
 		if JSON.parse(post_block)["hash"] == block["hash"]
 			duplicated_flag = true
