@@ -5,7 +5,7 @@ require "csv"
 require "openssl"
 
 app do |env| 
-  p "Recieved Transaction"
+  puts "Recieved transaction"
   ip_addr = Resolv::DNS.new(:nameserver=>'ns1.google.com').getresources("o-o.myaddr.l.google.com", Resolv::DNS::Resource::IN::TXT)[0].strings[0]
   response = false
   message = "Transaction's format is not valid"
@@ -15,7 +15,7 @@ app do |env|
   if transaction.kind_of?(Hash)
     if transaction_is_valid?(transaction)
       save_transaction(transaction)
-      # send_transaction(transaction)
+      send_transaction(transaction)
       message = "Confirmed"
     else
       message = "Rejected"
@@ -45,6 +45,7 @@ def transaction_is_duplicated?(transaction)
   CSV.read("./transactions.csv", headers: true).each do |post_transaction|
     if post_transaction.to_hash["hash"] == transaction["transaction_hash"]
       duplicated_flag = true
+      puts "Transaction is duplicated: #{transaction["transaction_hash"]}"
       break
     end
   end
@@ -67,6 +68,7 @@ def save_transaction(transaction)
   CSV.open("./transactions.csv","a") do |log|
     log.puts [transaction["from"], transaction["to"], transaction["value"], transaction["transaction_hash"], transaction["time_stamp"]]
   end
+  puts "Transaction is saved: #{transaction["transaction_hash"]}"
 end
 
 def send_transaction(transaction)
@@ -76,7 +78,6 @@ def send_transaction(transaction)
     client = HTTPClient.new
     query  = transaction.to_json
     response = client.post(url, query)
-    puts response.body
   end
 end
 
@@ -98,11 +99,7 @@ def create_block
     end
     nonce += 1
   end
-  p nonce, block_hash, transactions
   return nonce, block_hash, transactions
 end
-
-bind 'tcp://127.0.0.1:4000'
-
 
 
