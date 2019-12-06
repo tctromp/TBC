@@ -11,6 +11,7 @@ def recieve_block(env)
 if block.kind_of?(Hash)
 	if block_is_valid?(block)
 		save_block(block)
+		send_block(block)
 		message = "Block is valid"
 	else
 		message = "Block is invalid"
@@ -80,11 +81,19 @@ end
 def save_block(block)
 	key = ["hash", "nonce", "parent_hash", "transactions"]
 	values = [block["hash"], block["nonce"], block["parent_hash"], block["transactions"]]
-	p block["parent_hash"]
-	p block["transactions"]
 	block_json = [key, values].transpose.to_h
 	
 	File.open("./block.txt", "a") do |file|
 		file.puts(block_json.to_json)
+	end
+	puts "Saved Block"
+end
+
+def send_block(block)
+	node_urls = ["http://127.0.0.1:4001/block"]
+
+	node_urls.each do |url|
+		query = block.to_json
+		response = HTTPClient.new.post(url, query)
 	end
 end
