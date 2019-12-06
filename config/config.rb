@@ -15,7 +15,7 @@ app do |env|
   if transaction.kind_of?(Hash)
     if transaction_is_valid?(transaction)
       save_transaction(transaction)
-      send_transaction(transaction)
+      # send_transaction(transaction)
       message = "Confirmed"
     else
       message = "Rejected"
@@ -23,14 +23,16 @@ app do |env|
     response = true
   end
 
+  create_block()
+
   response_body = {
     "ip_addr": ip_addr,
     "responce": response,
     "message": message
   }
+
   [200, {'Content-Type' => 'application/json'}, [response_body.to_json]]
 
-  # create_block()
 end
 
 def transaction_is_valid?(transaction)
@@ -40,8 +42,8 @@ end
 def transaction_is_duplicated?(transaction)
   duplicated_flag = false
 
-  CSV.read("./transactions.csv").each do |post_transaction|
-    if post_transaction[3] == transaction["transaction_hash"]
+  CSV.read("./transactions.csv", headers: true).each do |post_transaction|
+    if post_transaction.to_hash["hash"] == transaction["transaction_hash"]
       duplicated_flag = true
       break
     end
@@ -52,8 +54,8 @@ end
 def enough_token?(transaction)
   enough_flag = true
 
-  CSV.read("./ledger.csv").each do |account|
-    if account[0] == transaction["from"] && account[1].to_i <= transaction["value"].to_i
+  CSV.read("./ledger.csv", headers: true).each do |account|
+    if account.to_hash["address"] == transaction["from"] && account.to_hash["amount"].to_i <= transaction["value"].to_i
       enought_flag = false
       break
     end
@@ -76,6 +78,28 @@ def send_transaction(transaction)
     response = client.post(url, query)
     puts response.body
   end
+end
+
+def create_block
+  sum = 0
+  nonce = 0
+  transactions = []
+  block_hash = ""
+  CSV.read("./transactions.csv", headers: true).each do |transaction|
+    sum += transaction.to_hash["hash"].hex
+    transactions.push(transaction)
+  end
+
+  while true
+    block_hash = OpenSSL::Digest.new("sha256").update(nonce.to_s + sum.to_s).to_s
+    if block_hash.start_with?("0000")
+
+      break
+    end
+    nonce += 1
+  end
+  p nonce, block_hash, transactions
+  return nonce, block_hash, transactions
 end
 
 bind 'tcp://127.0.0.1:4000'
