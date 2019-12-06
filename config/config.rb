@@ -2,6 +2,7 @@ require "./transaction.rb"
 require "./block.rb"
 
 app do |env|
+  p env["REQUEST_PATH"]
   case env["REQUEST_PATH"]
   when "/transaction"
     recieve_transaction(env)
