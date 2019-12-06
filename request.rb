@@ -18,7 +18,7 @@ query = {
     "to": to,
     "value": value,
     "time_stamp": time_stamp,
-    "transaction_hash": transaction_hash
+    "hash": transaction_hash
 }.to_json
 
 node_urls.each do |url|

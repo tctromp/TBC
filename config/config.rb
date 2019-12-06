@@ -66,7 +66,7 @@ end
 
 def save_transaction(transaction)
   CSV.open("./transactions.csv","a") do |log|
-    log.puts [transaction["from"], transaction["to"], transaction["value"], transaction["transaction_hash"], transaction["time_stamp"]]
+    log.puts [transaction["from"], transaction["to"], transaction["value"], transaction["hash"], transaction["time_stamp"]]
   end
   puts "Transaction is saved: #{transaction["transaction_hash"]}"
 end
@@ -101,5 +101,3 @@ def create_block
   end
   return nonce, block_hash, transactions
 end
-
-
