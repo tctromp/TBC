@@ -2,7 +2,7 @@ require "httpclient"
 require "json"
 require "openssl"
 
-node_urls = ["http://127.0.0.1:4000/block"]
+node_urls = ["http://127.0.0.1:4000/transaction"]
 client = HTTPClient.new
 
 from = "0xa3e639fd35"
