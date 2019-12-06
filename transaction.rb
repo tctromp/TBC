@@ -52,7 +52,6 @@ end
 
 def enough_token?(transaction)
   enough_flag = true
-
   CSV.read("./ledger.csv", headers: true).each do |account|
     if account.to_hash["address"] == transaction["from"] && account.to_hash["amount"].to_i <= transaction["value"].to_i
       enought_flag = false
