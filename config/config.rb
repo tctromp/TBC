@@ -1,6 +1,5 @@
 require "./transaction.rb"
 require "./block.rb"
-require "./request.rb"
 
 app do |env|
   case env["REQUEST_PATH"]
