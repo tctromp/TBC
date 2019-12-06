@@ -28,35 +28,19 @@ def create_transaction(node_urls)
 end
 
 def create_block(node_urls)
-    
     block_contents = mining().to_hash
 
     query = {
         "hash": block_contents[:hash],
         "nonce": block_contents[:nonce],
         "parent_hash": block_contents[:parent_hash],
-        "transactions": block_contents[:transactions] #nilになってる
+        "transactions": block_contents[:transactions]
     }.to_json
 
     route = "/block"
 
     request_node(query, route, node_urls)
 end
-
-# def create_block(node_urls)
-#     transactions = [{from: "0xa3e639fd35", to: "b", value: 1000000, hash: "abc", time_stamp: "2019-12-05 17:40:01 +0900"},
-#                 {from: "0xa3e639fd35", to: "b", value: 1, hash: "defg", time_stamp: "2019-12-05 17:40:01 +0900"}]
-#     query = {
-#         "hash": "0000cdf",
-#         "nonce": 100,
-#         "parent_hash": "00000",
-#         "transactions": transactions
-#     }.to_json
-
-#     route = "/block"
-
-#     request_node(query, route, node_urls)
-# end
 
 def request_node(query, route, node_urls)
     node_urls.each do |url|
@@ -92,3 +76,4 @@ while true
     create_block(node_urls)
     create_transaction(node_urls)
 end
+
