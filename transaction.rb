@@ -16,7 +16,7 @@ def recieve_transaction(env)
     if transaction.kind_of?(Hash)
       if transaction_is_valid?(transaction)
         save_transaction(transaction)
-        # send_transaction(transaction)
+        send_transaction(transaction)
         message = "Confirmed"
       else
         message = "Rejected"
@@ -69,7 +69,7 @@ def save_transaction(transaction)
 end
 
 def send_transaction(transaction)
-  node_urls = ["http://127.0.0.1:4001"]
+  node_urls = ["http://127.0.0.1:4001/transaction"]
 
   node_urls.each do |url|
     client = HTTPClient.new
