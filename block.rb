@@ -8,16 +8,16 @@ def recieve_block(env)
 	
 	block = JSON.parse(env['rack.input'].read) rescue nil
 
-if block.kind_of?(Hash)
-	if block_is_valid?(block)
-		save_block(block)
-		send_data("/block", block.to_json)
-		message = "Block is valid"
-	else
-		message = "Block is invalid"
+	if block.kind_of?(Hash)
+		if block_is_valid?(block)
+			save_block(block)
+			send_data("/block", block.to_json)
+			message = "Block is valid"
+		else
+			message = "Block is invalid"
+		end
+		response = true
 	end
-	response = true
-  end
 
   response_body = {
 	  "message": message
