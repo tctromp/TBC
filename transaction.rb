@@ -50,7 +50,6 @@ class Transaction < ActiveRecord::Base
     # return !transaction_is_duplicated?(transaction) && enough_token?(transaction)
   end
 
-# トランザクションが重複していないか確認
   def self.transaction_is_duplicated?(transaction)
     duplicated_flag = false
 
@@ -77,10 +76,6 @@ class Transaction < ActiveRecord::Base
   end
 
   def self.save_transaction(transaction)
-    # CSV.open("./transactions.csv","a") do |log|
-    #   log.puts [transaction["from"], transaction["to"], transaction["value"], transaction["hash"], transaction["time_stamp"]]
-    # end
-
     Transaction.create(from_address: transaction["from"], to_address: transaction["to"], value: transaction["value"], transaction_hash: transaction["hash"], time_stamp: transaction["time_stamp"])
     puts "Transaction is saved: #{transaction["hash"]}"
   end
