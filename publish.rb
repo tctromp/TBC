@@ -8,7 +8,7 @@ node_urls = ["http://127.0.0.1:4000"]
 def create_transaction(node_urls)
     from = "0xa3e639fd35"
     to = "0xccb9ef3c64"
-    value = 100
+    value = 10
     time_stamp = Time.now.to_s
 
     route = "/transaction"
@@ -58,6 +58,11 @@ def mining
         sum += transaction.to_hash["hash"].hex
         transactions.push(transaction.to_hash)
     end
+    
+    headers = ["from","to","value","hash","time_stamp"]
+    CSV.open("./transactions.csv", 'w') do |csv| 
+        csv.puts(headers)
+    end
 
     parent_hash = JSON.parse(File.open("./block.txt").to_a.last)["hash"]
     sum += parent_hash.to_i
@@ -77,3 +82,4 @@ while true
     create_transaction(node_urls)
 end
 
+# create_transaction(node_urls)
