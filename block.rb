@@ -102,11 +102,57 @@ class Block < ActiveRecord::Base
 	end
 
 	def self.save_block(block)
-		block_id = Block.create(block_hash: block["hash"], nonce: block["nonce"], parent_hash: block["parent_hash"])
+		new_block = Block.create(block_hash: block["hash"], nonce: block["nonce"], parent_hash: block["parent_hash"])
 		block["transactions"].each do |transaction|
-			Transaction.find_by(transaction_hash: transaction.hash).id = block_id
+			Transaction.find_by(transaction_hash: transaction.hash).block_hash = new_block.block_hash unless Transaction.find_by(transaction_hash: transaction.hash).class != nil
 		end
 		puts "Saved Block"
 	end
+
+	def self.create_block(node_urls)
+    block_contents = mining().to_hash
+
+    query = {
+        "hash": block_contents[:hash],
+        "nonce": block_contents[:nonce],
+        "parent_hash": block_contents[:parent_hash],
+        "transactions": block_contents[:transactions]
+    }.to_json
+
+    route = "/block"
+
+    request_node(query, route, node_urls)
+end
+
+def self.mining
+    sum = 0
+    nonce = 0
+    transactions = []
+
+		Transaction.all.limit(10).each do |transaction|
+			sum += transaction.transaction_hash.hex
+			transactions.push(transaction.to_json)
+		end
+
+    parent_hash = Transaction.last.transaction_hash
+
+    while true
+        hash = OpenSSL::Digest.new("sha256").update((nonce + sum).to_s).to_s.slice(1..10)
+        if hash.start_with?("00000")
+            break
+        end
+        nonce += 1
+    end
+    return {"hash": hash, "nonce": nonce, "parent_hash": parent_hash, "transactions": transactions}
+end
+
+node_urls = ["http://127.0.0.1:4000"]
+
+def self.request_node(query, route, node_urls)
+    node_urls.each do |url|
+        res = HTTPClient.post(url+route, query)
+        puts res.body
+    end
+end
 
 end
