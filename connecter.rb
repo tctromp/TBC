@@ -1,9 +1,12 @@
+require "./block.rb"
+require "./transaction.rb"
+
 def routing(env)
   case env["REQUEST_PATH"]
   when "/transaction"
-    recieve_transaction(env)
+    Transaction.recieve_transaction(env)
   when "/block"
-    recieve_block(env)
+    Block.recieve_block(env)
   else
     message = "Not Found"
 

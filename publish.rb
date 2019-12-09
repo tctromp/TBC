@@ -2,6 +2,8 @@ require "httpclient"
 require "json"
 require "openssl"
 require "csv"
+require "./connecter.rb"
+require "./block.rb"
 
 node_urls = ["http://127.0.0.1:4000"]
 
@@ -27,21 +29,6 @@ def create_transaction(node_urls)
     request_node(query, route, node_urls)
 end
 
-def create_block(node_urls)
-    block_contents = mining().to_hash
-
-    query = {
-        "hash": block_contents[:hash],
-        "nonce": block_contents[:nonce],
-        "parent_hash": block_contents[:parent_hash],
-        "transactions": block_contents[:transactions]
-    }.to_json
-
-    route = "/block"
-
-    request_node(query, route, node_urls)
-end
-
 def request_node(query, route, node_urls)
     node_urls.each do |url|
         res = HTTPClient.post(url+route, query)
@@ -49,37 +36,7 @@ def request_node(query, route, node_urls)
     end
 end
 
-def mining
-    sum = 0
-    nonce = 0
-    transactions = []
-
-    CSV.read("./transactions.csv", headers: true).each do |transaction|
-        sum += transaction.to_hash["hash"].hex
-        transactions.push(transaction.to_hash)
-    end
-    
-    headers = ["from","to","value","hash","time_stamp"]
-    CSV.open("./transactions.csv", 'w') do |csv| 
-        csv.puts(headers)
-    end
-
-    parent_hash = JSON.parse(File.open("./block.txt").to_a.last)["hash"]
-    sum += parent_hash.to_i
-
-    while true
-        hash = OpenSSL::Digest.new("sha256").update((nonce + sum).to_s).to_s.slice(1..10)
-        if hash.start_with?("00000")
-            break
-        end
-        nonce += 1
-    end
-    return {"hash": hash, "nonce": nonce, "parent_hash": parent_hash, "transactions": transactions}
-end
-
 while true
-    create_block(node_urls)
+    Block.create_block(node_urls)
     create_transaction(node_urls)
 end
-
-# create_transaction(node_urls)
