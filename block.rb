@@ -11,7 +11,7 @@ def recieve_block(env)
 if block.kind_of?(Hash)
 	if block_is_valid?(block)
 		save_block(block)
-		send_block(block)
+		send_data("/block", block.to_json)
 		message = "Block is valid"
 	else
 		message = "Block is invalid"
@@ -26,9 +26,6 @@ if block.kind_of?(Hash)
 end
 
 def block_is_valid?(block)
-	# p hash_is_enough_small?(block)
-	# p included_transactions_are_valid?(block)
-	# p block_is_duplicated?(block)
 	return hash_is_enough_small?(block) && included_transactions_are_valid?(block) && !block_is_duplicated?(block)
 end
 
@@ -90,13 +87,4 @@ def save_block(block)
 		file.puts(block_json.to_json)
 	end
 	puts "Saved Block"
-end
-
-def send_block(block)
-	node_urls = ["http://127.0.0.1:4001/block"]
-
-	node_urls.each do |url|
-		query = block.to_json
-		response = HTTPClient.new.post(url, query)
-	end
 end

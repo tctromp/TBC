@@ -3,6 +3,7 @@ require "json"
 require "httpclient"
 require "csv"
 require "openssl"
+require "./connecter.rb"
 
 def recieve_transaction(env)
   puts "Recieved transaction"
@@ -16,7 +17,7 @@ def recieve_transaction(env)
     if transaction.kind_of?(Hash)
       if transaction_is_valid?(transaction)
         save_transaction(transaction)
-        send_transaction(transaction)
+        send_data("/transaction", transaction.to_json)
         message = "Confirmed"
       else
         message = "Rejected"
@@ -66,14 +67,4 @@ def save_transaction(transaction)
     log.puts [transaction["from"], transaction["to"], transaction["value"], transaction["hash"], transaction["time_stamp"]]
   end
   puts "Transaction is saved: #{transaction["hash"]}"
-end
-
-def send_transaction(transaction)
-  node_urls = ["http://127.0.0.1:4001/transaction"]
-
-  node_urls.each do |url|
-    client = HTTPClient.new
-    query  = transaction.to_json
-    response = client.post(url, query)
-  end
 end
