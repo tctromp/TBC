@@ -26,7 +26,7 @@ def recieve_block(env)
 end
 
 def block_is_valid?(block)
-	return hash_is_enough_small?(block) && included_transactions_are_valid?(block) && !block_is_duplicated?(block)
+	return hash_is_enough_small?(block) && included_transactions_are_valid?(block) && !block_is_duplicated?(block) && has_parent_block?(block)
 end
 
 def block_is_duplicated?(block)
@@ -38,6 +38,17 @@ def block_is_duplicated?(block)
 		end
 	end
 	return duplicated_flag
+end
+
+def has_parent_block?(block)
+	has_parent_flag = false
+	File.open("./block.txt").each do |post_block|
+		if JSON.parse(post_block)["hash"] == block["parent_hash"]
+			has_parent_flag = true
+			break
+		end
+	end
+	return has_parent_flag
 end
 
 def hash_is_enough_small?(block)
@@ -86,5 +97,11 @@ def save_block(block)
 	File.open("./block.txt", "a") do |file|
 		file.puts(block_json.to_json)
 	end
+
+	headers = ["from","to","value","hash","time_stamp"]
+  CSV.open("./transactions.csv", 'w') do |csv| 
+      csv.puts(headers)
+  end
+
 	puts "Saved Block"
 end
