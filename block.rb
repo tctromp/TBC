@@ -2,15 +2,7 @@ require "json"
 require "active_record"
 require "./transaction.rb"
 
-ActiveRecord::Base.establish_connection(
-	:adapter=>"mysql2",
-	:host  =>"localhost",
-	:database =>"tbc",
-	:username=>"root",
-	:password=>"",
-)
-
-class Block < ActiveRecord::Base
+class Block
 	def self.recieve_block(env)
 		puts "Recieve Block"
 
@@ -101,10 +93,12 @@ class Block < ActiveRecord::Base
 		end 
 	end
 
-	def self.save_block(block)
-		new_block = Block.create(block_hash: block["hash"], nonce: block["nonce"], parent_hash: block["parent_hash"])
+	def self.save_block(block)		
+		dir_name = create_lastest_block_name()
+		Dir.mkdir("blocks/#{dir_name}")
+
 		block["transactions"].each do |transaction|
-			Transaction.find_by(transaction_hash: transaction.hash).block_hash = new_block.block_hash unless Transaction.find_by(transaction_hash: transaction.hash).class != nil
+			# Transaction.find_by(transaction_hash: transaction["transaction_hash"]).block_hash = new_block.block_hash
 		end
 		puts "Saved Block"
 	end
@@ -117,42 +111,51 @@ class Block < ActiveRecord::Base
         "nonce": block_contents[:nonce],
         "parent_hash": block_contents[:parent_hash],
         "transactions": block_contents[:transactions]
-    }.to_json
+			}.to_json
 
     route = "/block"
+			request_node(query, route, node_urls)
+	end
 
-    request_node(query, route, node_urls)
-end
+	def self.mining
+		sum = 0
+		nonce = 0
+		transactions = []
 
-def self.mining
-    sum = 0
-    nonce = 0
-    transactions = []
+			# Transaction.all.limit(10).each do |transaction|
+			# 	sum += transaction.transaction_hash.hex
+			# 	transactions.push(transaction)
+			# end
 
-		Transaction.all.limit(10).each do |transaction|
-			sum += transaction.transaction_hash.hex
-			transactions.push(transaction.to_json)
+			# parent_hash = Transaction.last.transaction_hash
+		parent_hash = "ffffff"
+			
+
+		while true
+			hash = OpenSSL::Digest.new("sha256").update((nonce + sum).to_s).to_s.slice(1..10)
+				if hash.start_with?("00000")
+					break
+				end
+					nonce += 1
+			end
+			return {"hash": hash, "nonce": nonce, "parent_hash": parent_hash, "transactions": transactions}
+	end
+
+	node_urls = ["http://127.0.0.1:4000"]
+
+	def self.request_node(query, route, node_urls)
+		node_urls.each do |url|
+			res = HTTPClient.post(url+route, query)
+			puts res.body
 		end
+	end
 
-    parent_hash = Transaction.last.transaction_hash
-
-    while true
-        hash = OpenSSL::Digest.new("sha256").update((nonce + sum).to_s).to_s.slice(1..10)
-        if hash.start_with?("00000")
-            break
-        end
-        nonce += 1
-    end
-    return {"hash": hash, "nonce": nonce, "parent_hash": parent_hash, "transactions": transactions}
-end
-
-node_urls = ["http://127.0.0.1:4000"]
-
-def self.request_node(query, route, node_urls)
-    node_urls.each do |url|
-        res = HTTPClient.post(url+route, query)
-        puts res.body
-    end
-end
+	def self.create_lastest_block_name
+		last_block_number = 0
+		Dir.children("./blocks").each do |dir|
+			last_block_number = dir.slice(0..9).to_i if last_block_number <= dir.slice(0..9).to_i
+		end
+		return format("%010d", last_block_number + 1) + "_block"
+	end
 
 end
