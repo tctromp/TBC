@@ -3,18 +3,9 @@ require "json"
 require "httpclient"
 require "csv"
 require "openssl"
-require "active_record"
 require "./connecter.rb"
 
-ActiveRecord::Base.establish_connection(
-	:adapter=>"mysql2",
-	:host  =>"localhost",
-	:database =>"tbc",
-	:username=>"root",
-	:password=>"",
-)
-
-class Transaction < ActiveRecord::Base
+class Transaction
 
   def self.recieve_transaction(env)
   puts "Recieved transaction"
@@ -46,7 +37,8 @@ class Transaction < ActiveRecord::Base
   end
 
   def self.transaction_is_valid?(transaction)
-    return !transaction_is_duplicated?(transaction)
+    true
+    # return !transaction_is_duplicated?(transaction)
     # return !transaction_is_duplicated?(transaction) && enough_token?(transaction)
   end
 
@@ -76,9 +68,22 @@ class Transaction < ActiveRecord::Base
   end
 
   def self.save_transaction(transaction)
-    Transaction.create(from_address: transaction["from"], to_address: transaction["to"], value: transaction["value"], transaction_hash: transaction["hash"], time_stamp: transaction["time_stamp"])
+    file_name = create_lastest_transaction_name()
+    puts Dir.entries("./transactions")
+    CSV.open("./transactions/#{file_name}","wb") do |csv|
+      csv.puts ["from_address","to_address", "value", "transaction_hash", "time_stamp"]
+      csv.puts [transaction["from"], transaction["to"], transaction["value"], transaction["hash"], transaction["time_stamp"]]
+    end
     puts "Transaction is saved: #{transaction["hash"]}"
   end
-  
 
+  def self.create_lastest_transaction_name()
+    last_file_number = 0
+    Dir.entries("./transactions").each do |file|
+      last_file_number = file.slice(0..9).to_i if last_file_number <= file.slice(0..9).to_i
+    end
+    file_name = format("%010d", last_file_number + 1) + "_transaction.csv"
+    return file_name
+  end
+  
 end
