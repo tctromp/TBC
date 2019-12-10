@@ -1,6 +1,5 @@
 require "json"
-require "active_record"
-require "./transaction.rb"
+require "csv"
 
 class Block
 	def self.recieve_block(env)
@@ -29,21 +28,24 @@ class Block
 	end
 
 	def self.block_is_valid?(block)
-		true
+		return hash_is_enough_small?(block) && included_transactions_are_valid?(block)
 		# return hash_is_enough_small?(block) && included_transactions_are_valid?(block) && !block_is_duplicated?(block) && has_parent_block?(block)
 	end
 
 	def self.block_is_duplicated?(block)
 		duplicated_flag = false
-		File.open("./block.txt").each do |post_block|
-			if JSON.parse(post_block)["hash"] == block["hash"]
-				duplicated_flag = true
-				break
+		Dir.children("./blocks").each do |dir|
+			CSV.read("./blocks/#{dir}/header.csv", headers: true).each do |header|
+					if header["hash"] == block["hash"]
+						duplicated_flag = true
+						break
+					end
 			end
 		end
 		return duplicated_flag
 	end
 
+	# ここが未完成
 	def self.has_parent_block?(block)
 		has_parent_flag = false
 		File.open("./block.txt").each do |post_block|
@@ -62,35 +64,14 @@ class Block
 	def self.included_transactions_are_valid?(block)
 		transactons_are_valid = true
 		block["transactions"].each do |transaction|
-			unless enough_token?(transaction)
-				transactons_are_valid = false
-				break
+			CSV.read("./transactions/#{transaction}", headers: true).each do |header|
+				if Wallet.get_amount(header["from_address"]) < transaction["value"].to_i
+					transactons_are_valid = false
+					break
+				end
 			end
 		end
 		return transactons_are_valid
-	end
-
-	def self.enough_token?(transaction) 
-		enough_flag = true
-		CSV.read("./ledger.csv", headers: true).each do |account|
-			if transaction["from"] == account.to_hash["address"] && account.to_hash["amount"].to_i <= transaction["value"].to_i
-				enough_flag = false
-				break
-			end
-			return enough_flag
-		end 
-	end
-
-	def self.account_is_recognized?(transaction)
-		recognized_flag = false
-
-		CSV.read("./ledger.csv", headers: true).each do |account|
-			if transaction["from"] == account.to_hash["address"]
-				recognized_flag = true
-				break
-			end
-			return enough_flag
-		end 
 	end
 
 	def self.save_block(block)		
@@ -110,10 +91,9 @@ class Block
 
 		CSV.open("./transaction_counter.csv", "w") do |csv|
 			csv.puts [transaction_counter]
-			p transaction_counter
 		end
 
-		puts "Saved Block"
+		puts "Saved Block #{block["hash"]}"
 	end
 
 	def self.create_block(node_urls)
@@ -135,6 +115,8 @@ class Block
 		nonce = 0
 		transactions = []
 
+		# coinbaseトランザクションの発行=>transactionsへ
+
 			files = Dir.children("./transactions").sort_by! do |file|
 				file.slice(0..9).to_i
 			end
@@ -145,10 +127,11 @@ class Block
 				sum += CSV.read("./transactions/#{file}", headers: true)["transaction_hash"].first.to_i
 				transactions.push(file)
 			end
-			parent_hash = "fffff"
+
+			parent_hash = get_parent_hash()
 			
 		while true
-			hash = OpenSSL::Digest.new("sha256").update((nonce + sum).to_s).to_s.slice(1..10)
+			hash = OpenSSL::Digest.new("sha256").update((nonce + sum).to_s + Time.now.to_s).to_s.slice(1..10)
 				if hash.start_with?("00000")
 					break
 				end
@@ -172,6 +155,22 @@ class Block
 			last_block_number = dir.slice(0..9).to_i if last_block_number <= dir.slice(0..9).to_i
 		end
 		return format("%010d", last_block_number + 1) + "_block"
+	end
+
+	def self.get_parent_hash
+		parent_hash = "0x0000000"
+
+		dirs = Dir.children("./blocks").sort_by! do |file|
+			file.slice(0..9).to_i
+		end
+		
+		dirs.each do |dir|
+			CSV.open("./blocks/#{dir}/header.csv", headers: true).each do |header|
+				parent_hash = header["hash"]
+			end
+		end
+
+		return parent_hash
 	end
 
 end
