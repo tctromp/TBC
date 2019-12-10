@@ -55,12 +55,7 @@ class Transaction
 
   def self.enough_token?(transaction)
     enough_flag = true
-    CSV.read("./ledger.csv", headers: true).each do |account|
-      if account.to_hash["address"] == transaction["from"] && account.to_hash["amount"].to_i <= transaction["value"].to_i
-        enought_flag = false
-        break
-      end
-    end
+    
     return enough_flag
   end
 
@@ -81,5 +76,19 @@ class Transaction
     file_name = format("%010d", last_file_number + 1) + "_transaction.csv"
     return file_name
   end
+
+  def self.create_transaction(query, node_urls)
+    route = "/transaction"
+    request_node(query, route, node_urls)
+  end
+
+  node_urls = ["http://127.0.0.1:4000"]
+
+	def self.request_node(query, route, node_urls)
+		node_urls.each do |url|
+			res = HTTPClient.post(url+route, query)
+			puts res.body
+		end
+	end
   
 end
