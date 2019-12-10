@@ -98,7 +98,8 @@ class Block
 		Dir.mkdir("blocks/#{dir_name}")
 
 		block["transactions"].each do |transaction|
-			# Transaction.find_by(transaction_hash: transaction["transaction_hash"]).block_hash = new_block.block_hash
+			# トランザクションの移動
+			File.rename("./transactions/#{transaction}", "blocks/#{dir_name}/#{transaction}")
 		end
 		puts "Saved Block"
 	end
@@ -122,15 +123,16 @@ class Block
 		nonce = 0
 		transactions = []
 
-			# Transaction.all.limit(10).each do |transaction|
-			# 	sum += transaction.transaction_hash.hex
-			# 	transactions.push(transaction)
-			# end
+			files = Dir.children("./transactions").sort_by! do |file|
+				file.slice(0..9).to_i
+			end
 
-			# parent_hash = Transaction.last.transaction_hash
-		parent_hash = "ffffff"
+			files.first(5).each do |file|
+				sum += CSV.read("./transactions/#{file}", headers: true)["transaction_hash"].first.to_i
+				transactions.push(file)
+			end
+			parent_hash = "fffff"
 			
-
 		while true
 			hash = OpenSSL::Digest.new("sha256").update((nonce + sum).to_s).to_s.slice(1..10)
 				if hash.start_with?("00000")
