@@ -37,16 +37,14 @@ class Transaction
   end
 
   def self.transaction_is_valid?(transaction)
-    true
-    # return !transaction_is_duplicated?(transaction)
+    !transaction_is_duplicated?(transaction)
     # return !transaction_is_duplicated?(transaction) && enough_token?(transaction)
   end
 
   def self.transaction_is_duplicated?(transaction)
     duplicated_flag = false
-
-    Transaction.all.each do |post_transaction|
-      if post_transaction.transaction_hash == transaction["hash"]
+    Dir.children("./transactions").each do |file|
+      if CSV.read("./transactions/#{file}", headers: true)["transaction_hash"].first == transaction["hash"]
         duplicated_flag = true
         puts "Transaction is duplicated: #{transaction["hash"]}"
         break
@@ -55,7 +53,6 @@ class Transaction
     return duplicated_flag
   end
 
-# 十分な通貨を持っているか確認
   def self.enough_token?(transaction)
     enough_flag = true
     CSV.read("./ledger.csv", headers: true).each do |account|
@@ -69,7 +66,6 @@ class Transaction
 
   def self.save_transaction(transaction)
     file_name = create_lastest_transaction_name()
-    puts Dir.entries("./transactions")
     CSV.open("./transactions/#{file_name}","wb") do |csv|
       csv.puts ["from_address","to_address", "value", "transaction_hash", "time_stamp"]
       csv.puts [transaction["from"], transaction["to"], transaction["value"], transaction["hash"], transaction["time_stamp"]]
@@ -79,7 +75,7 @@ class Transaction
 
   def self.create_lastest_transaction_name()
     last_file_number = 0
-    Dir.entries("./transactions").each do |file|
+    Dir.children("./transactions").each do |file|
       last_file_number = file.slice(0..9).to_i if last_file_number <= file.slice(0..9).to_i
     end
     file_name = format("%010d", last_file_number + 1) + "_transaction.csv"
