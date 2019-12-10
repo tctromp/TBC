@@ -4,7 +4,7 @@ require "./transaction.rb"
 
 class Block
 	def self.recieve_block(env)
-		puts "Recieve Block"
+		puts "\nRecieve Block"
 
 		response = false
 		message = "Block's format is not valid"
@@ -97,10 +97,22 @@ class Block
 		dir_name = create_lastest_block_name()
 		Dir.mkdir("blocks/#{dir_name}")
 
+		transaction_counter = 0
 		block["transactions"].each do |transaction|
-			# トランザクションの移動
-			File.rename("./transactions/#{transaction}", "blocks/#{dir_name}/#{transaction}")
+			FileUtils.copy("./transactions/#{transaction}", "blocks/#{dir_name}/")
+			transaction_counter = transaction.slice(0..9).to_i
 		end
+
+		CSV.open("blocks/#{dir_name}/header.csv","w") do |csv|
+			csv.puts ["hash","nonce","parent_hash"]
+			csv.puts [block["hash"], block["nonce"], block["parent_hash"]]
+		end
+
+		CSV.open("./transaction_counter.csv", "w") do |csv|
+			csv.puts [transaction_counter]
+			p transaction_counter
+		end
+
 		puts "Saved Block"
 	end
 
@@ -127,7 +139,9 @@ class Block
 				file.slice(0..9).to_i
 			end
 
-			files.first(5).each do |file|
+			transaction_counter = CSV.read("./transaction_counter.csv")[0][0].to_i
+
+			files.slice(transaction_counter, 5).each do |file|
 				sum += CSV.read("./transactions/#{file}", headers: true)["transaction_hash"].first.to_i
 				transactions.push(file)
 			end
