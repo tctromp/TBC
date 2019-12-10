@@ -4,6 +4,7 @@ require "httpclient"
 require "csv"
 require "openssl"
 require "./connecter.rb"
+require "./wallet.rb"
 
 class Transaction
 
@@ -37,8 +38,7 @@ class Transaction
   end
 
   def self.transaction_is_valid?(transaction)
-    !transaction_is_duplicated?(transaction)
-    # return !transaction_is_duplicated?(transaction) && enough_token?(transaction)
+    return !transaction_is_duplicated?(transaction) && enough_token?(transaction)
   end
 
   def self.transaction_is_duplicated?(transaction)
@@ -54,9 +54,7 @@ class Transaction
   end
 
   def self.enough_token?(transaction)
-    enough_flag = true
-    
-    return enough_flag
+    return Wallet.get_amount(transaction["from"]) >= transaction["value"]
   end
 
   def self.save_transaction(transaction)
